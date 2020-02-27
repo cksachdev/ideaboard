@@ -80,7 +80,6 @@
         var SCOPES = "https://www.googleapis.com/auth/spreadsheets";
         var authorizeButton = document.getElementById('authorize_button');
         var signoutButton = document.getElementById('signout_button');
-
         function handleClientLoad() {
           gapi.load('client:auth2', initClient);
         }
@@ -142,14 +141,14 @@
             makeAjax(url);
         }
 
-        function update_value(){
+        function update_value(data = ''){
             $("#loader").show();
             var dataToSend = {
                 callback : 'ctrlq',
                 database : database,
                 table    : table,
                 action   : 'U',
-                row      : getFormParams()
+                row      : data || getFormParams()
             }
             var url =script_url+'?data='+JSON.stringify(dataToSend);    
             console.log('update: url= '+url);
@@ -170,11 +169,12 @@
             param.push('');
             param.push($("#title").val());
             param.push($("#description").val());
+            param.push(0);
             return param;
         }
 
         function ctrlq(e) {
-            f = e;  // <-- hay que arreglar esto
+            f = e;
             console.log(e.action+" : "+e.result);
             $("#loader").hide();
             $("#ideaList").html(createCard(e.spreadsheet+" : "+e.sheet,e.data));
@@ -187,8 +187,7 @@
                 '<span class="text-muted">'+ data[i][1] +'</span>'+
                 '<span class="badge badge-secondary badge-pill">'+ data[i][3] +' Vote</span></h5>'+
                 '<p class="card-text">'+ data[i][2] +'</p>'+
-                '<a href="#" class="btn btn-success mr-1"><i class="fa fa-thumbs-up" aria-hidden="true"></i></a>'+
-                '<a href="#" class="btn btn-danger"><i class="fa fa-thumbs-down" aria-hidden="true"></i></a>'+
+                '<a href="javascript:void(0)" onClick="upVote('+data[i][0]+');"  class="btn btn-success mr-1"><i class="fa fa-thumbs-up" aria-hidden="true"></i></a>'+
                 '</div></div></div>'
             }
             return tb;
@@ -201,6 +200,13 @@
             addBtn.click();
             document.getElementById("ideaForm").reset();
         });
+
+        function upVote(selectedId) {
+          var data = f.data[selectedId];
+          data[3] = data[3] + 1;
+          update_value(data);
+          ideaList.html('');
+        }
 
       </script>
 <script async defer src="https://apis.google.com/js/api.js"
