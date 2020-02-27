@@ -15,7 +15,7 @@
         <nav class="navbar navbar-light bg-light justify-content-between">
             <a class="navbar-brand">IDEA Board</a>
             <div class="d-flex">
-                <button class="btn btn-secondary my-2 my-sm-0 mr-2" id="addBtn">+ Add</button>
+                <button class="btn btn-secondary my-2 my-sm-0 mr-2" id="addBtn" style="display: none;">+ Add </button>
                 <button class="btn btn-primary my-2 my-sm-0" id="authorize_button">Sign In</button>
                 <button class="btn btn-primary my-2 my-sm-0" style="display: none;" id="signout_button">Sign Out</button>
             </div>
@@ -62,17 +62,16 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script>
+    <script type="text/javascript">
         var addBtn = $("#addBtn");
         var ideaList = $("#ideaList");
         var addFormIdea = $("#addFormIdea");
+        var currentUserEmail = '';
 
         addBtn.click(function() {
-            ideaList.toggleClass("d-none");
-            addFormIdea.toggleClass("d-none");
+          ideaList.toggleClass("d-none");
+          addFormIdea.toggleClass("d-none");
         });
-    </script>
-    <script type="text/javascript">
         var CLIENT_ID = '';
         var API_KEY = '';
         
@@ -90,10 +89,8 @@
             clientId: CLIENT_ID,
             discoveryDocs: DISCOVERY_DOCS,
             scope: SCOPES
-          }).then(function () {
-           
+          }).then(function (result) {
             gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-  
             // Handle the initial sign-in state.
             updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
             authorizeButton.onclick = handleAuthClick;
@@ -104,13 +101,20 @@
         }
   
         function updateSigninStatus(isSignedIn) {
+          
           if (isSignedIn) {
             authorizeButton.style.display = 'none';
             signoutButton.style.display = 'block';
+            addBtn.show();
             read_value();
+            var googleUser = gapi.auth2.getAuthInstance().currentUser.get();
+            currentUserEmail = googleUser.getBasicProfile().zu;
+            console.log(currentUserEmail);
           } else {
             authorizeButton.style.display = 'block';
             signoutButton.style.display = 'none';
+            addBtn.hide();
+            currentUserEmail = '';
           }
         }
   
@@ -120,6 +124,8 @@
   
         function handleSignoutClick(event) {
           gapi.auth2.getAuthInstance().signOut();
+          ideaList.html('');
+          // addBtn.style.display = 'none';
         }
 
 
@@ -141,8 +147,8 @@
             makeAjax(url);
         }
 
-        function update_value(data = ''){
-            $("#loader").show();
+        function update_value(data = '',loader = true){
+            if(loader) $("#loader").show();
             var dataToSend = {
                 callback : 'ctrlq',
                 database : database,
@@ -203,9 +209,15 @@
 
         function upVote(selectedId) {
           var data = f.data[selectedId];
+          var str_pos = data[4].indexOf(currentUserEmail);
+          if (str_pos > -1) {
+            alert("You have already given vote for this idea");
+            return;
+          }
           data[3] = data[3] + 1;
-          update_value(data);
-          ideaList.html('');
+          data[4] = data[4]+','+currentUserEmail;
+          data[4] = data[4].replace(/(^,)|(,$)/g, "")
+          update_value(data,false);
         }
 
       </script>
